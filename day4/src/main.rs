@@ -23,7 +23,7 @@ impl Range {
                 return true;
             }
         }
-        return false;
+        false
     }
 }
 

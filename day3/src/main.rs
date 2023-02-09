@@ -1,5 +1,6 @@
-use std::fs;
-
+#[allow(dead_code, unused_imports)]
+use itertools::Itertools;
+use std::{collections::HashSet, fs};
 #[derive(Debug)]
 struct Rucksack {
     first: Vec<Item>,
@@ -10,7 +11,7 @@ struct Rucksack {
 
 struct Er(&'static str);
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, Eq, Hash)]
 struct Item(u8);
 
 impl TryFrom<u8> for Item {
@@ -37,34 +38,37 @@ impl Item {
 fn main() {
     let input_str = fs::read_to_string("./input/input.txt").unwrap();
     let lines = input_str
-        .split("\n")
+        .split('\n')
         .filter(|l| !l.is_empty())
         .collect::<Vec<&str>>();
 
-    let sacks = parse_lines(lines).unwrap();
+    let sacks = parse_lines(&lines).unwrap();
 
     let matches: Vec<Item> = sacks
         .iter()
         .filter_map(|s| {
             for c in &s.first {
-                if s.second.contains(&c) {
-                    return Some(c.clone());
+                if s.second.contains(c) {
+                    return Some(*c);
                 }
             }
-            return None;
+            None
         })
         .collect();
 
     let match_vals: Vec<usize> = matches.iter().map(|i| i.score()).collect();
 
-    println!("matches: {:?}", matches);
-    println!(
-        "match vals: {:?}",
-        match_vals.iter().fold(0, |acc, x| acc + x)
-    );
+    dbg!(match_vals);
+
+    let file_str = include_str!("../input/test.txt");
+
+    dbg!(file_str);
+
+    let ans = part_2(&lines).unwrap();
+    dbg!(ans);
 }
 
-fn parse_lines(lines: Vec<&str>) -> Result<Vec<Rucksack>, Er> {
+fn parse_lines(lines: &[&str]) -> Result<Vec<Rucksack>, Er> {
     let r = lines
         .iter()
         .filter_map(|l| {
@@ -84,4 +88,39 @@ fn parse_lines(lines: Vec<&str>) -> Result<Vec<Rucksack>, Er> {
         .collect();
 
     Ok(r)
+}
+
+// ["dsfd", "asdf", "asdfdf"]
+// go through each line
+// create a hashset
+// intersect 3 hashsets
+
+fn part_2(lines: &[&str]) -> Result<usize, Er> {
+    let hs: Vec<HashSet<Item>> = lines
+        .iter()
+        .map(|l| l.chars().map(|c| Item(c as u8)).collect())
+        .collect();
+
+    let matches: Vec<Item> = hs
+        .iter()
+        .tuples()
+        .flat_map(|(a, b, c)| {
+            let common: Vec<Item> = a
+                .iter()
+                .copied()
+                .filter(|e| b.contains(e) && c.contains(e))
+                .collect();
+
+            if common.len() != 1 {
+                dbg!(a);
+                dbg!("wtf");
+            }
+
+            common
+        })
+        .collect();
+
+    let ans = matches.iter().map(|i| dbg!(i.score())).sum();
+
+    Ok(ans)
 }

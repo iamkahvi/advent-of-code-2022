@@ -2,16 +2,15 @@ use std::fs;
 
 #[derive(Debug)]
 struct Rucksack {
-    first: Vec<char>,
-    second: Vec<char>,
+    first: Vec<Item>,
+    second: Vec<Item>,
 }
 
 #[derive(Debug)]
 
 struct Er(&'static str);
 
-#[derive(Debug)]
-
+#[derive(Debug, PartialEq, Clone, Copy)]
 struct Item(u8);
 
 impl TryFrom<u8> for Item {
@@ -44,19 +43,19 @@ fn main() {
 
     let sacks = parse_lines(lines).unwrap();
 
-    let matches: Vec<char> = sacks
+    let matches: Vec<Item> = sacks
         .iter()
         .filter_map(|s| {
-            for c in s.first.clone() {
+            for c in &s.first {
                 if s.second.contains(&c) {
-                    return Some(c);
+                    return Some(c.clone());
                 }
             }
             return None;
         })
         .collect();
 
-    let match_vals: Vec<usize> = matches.iter().map(|m| Item(*m as u8).score()).collect();
+    let match_vals: Vec<usize> = matches.iter().map(|i| i.score()).collect();
 
     println!("matches: {:?}", matches);
     println!(
@@ -75,9 +74,11 @@ fn parse_lines(lines: Vec<&str>) -> Result<Vec<Rucksack>, Er> {
                 return None;
             }
 
+            let (first, second) = l.split_at(len / 2);
+
             Some(Rucksack {
-                first: l[..(len / 2)].chars().collect(),
-                second: l[(len / 2)..].chars().collect(),
+                first: first.chars().map(|c| Item(c as u8)).collect(),
+                second: second.chars().map(|c| Item(c as u8)).collect(),
             })
         })
         .collect();
